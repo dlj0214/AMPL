@@ -1,80 +1,132 @@
-# Multimodal Prompt Learning with Missing Modalities for Sentiment Analysis and Emotion Recognition
 
-[ACL 2024 Main] Official PyTorch implementation of the paper "Multimodal Prompt Learning with Missing Modalities for Sentiment Analysis and Emotion Recognition"
+# Adaptive Multimodal Prompt Learning (AMPL)
 
-## Introduction
+## Overview
 
-The development of multimodal models has significantly advanced multimodal sentiment analysis and emotion recognition. However, in real-world applications, the presence of various missing modality cases often leads to a degradation in the model's performance. In this work, we propose a novel multimodal Transformer framework using prompt learning to address the issue of missing modalities. Our method introduces three types of prompts: generative prompts, missing-signal prompts, and missing-type prompts. These prompts enable the generation of missing modality features and facilitate the learning of intra- and inter-modality information. Through prompt tuning, we achieve a substantial reduction in the number of trainable parameters. Extensive experiments and ablation studies are conducted to demonstrate the effectiveness and robustness of our method, showcasing its ability to effectively handle missing modalities. 
+Multimodal learning typically assumes that all input modalities (e.g., text, audio, video) are fully available during training and inference. However, in real-world scenarios, missing modality issues caused by equipment failure, privacy constraints, or data corruption are common. To address these challenges, **Adaptive Multimodal Prompt Learning (AMPL)** introduces a robust and scalable framework that combines adaptive prompts with cross-modal attention to reconstruct missing modalities dynamically.
 
-![overall](overall.png)
+AMPL achieves high performance under missing modality conditions using three core innovations:
+1. **Adaptive Generative Prompts (AGP):** Dynamically generates embeddings for missing modalities using available modalities.
+2. **Attention-Augmented Missing Modality Generation Module (A-MMGM):** Utilizes cross-modal attention to enhance feature reconstruction.
+3. **Dynamic Prompt Injection (DPI):** Injects task-relevant and modality-specific prompts into the Transformer model.
 
+---
 
+## Key Features
 
-## Getting Started
+- **Robust to Missing Modalities:** Randomly simulates missing modalities during training and reconstructs them using adaptive prompts.
+- **Efficient Transfer Learning:** Fine-tunes only task-specific prompt parameters, significantly reducing computational overhead.
+- **Dynamic Adaptability:** Models any combination of missing modalities with scalable prompt mechanisms.
+- **Transformer-Based Architecture:** Leverages cross-modal attention and Transformer encoders for multimodal fusion.
 
-### Requirements
+---
 
-- Python >= 3.8, PyTorch >= 1.8.0
+## Installation
 
+### Prerequisites
+- Python >= 3.7
+- PyTorch >= 1.9.0
+- Additional dependencies are listed in `requirements.txt`. Install them using:
+  ```bash
+  pip install -r requirements.txt
+  ```
 
+---
+
+## Datasets
+
+AMPL has been evaluated on the following multimodal datasets:
+1. **CMU-MOSEI:** A large-scale sentiment analysis dataset.
+2. **CMU-MOSI:** A multimodal sentiment analysis dataset.
+3. **IEMOCAP:** An emotion recognition dataset with text, audio, and video modalities.
+4. **CH-SIMS:** A Chinese multimodal sentiment analysis dataset.
+
+---
+
+## Usage
+
+### 1. **Training**
+To train the AMPL model, use the `train.py` script:
+```bash
+python train.py --dataset mosei --drop_rate 0.3 --batch_size 32 --epochs 50
 ```
-git clone https://github.com/zrguo/MPLMM.git
+
+### 2. **Evaluation**
+Run the evaluation script to test the trained model on a specific dataset:
+```bash
+python train.py --dataset mosi --evaluate
 ```
 
-### Datasets
+### 3. **Parameters**
+Key arguments for training:
+- `--dataset`: The dataset to use (`mosei`, `mosi`, `iemocap`, or `chsims`).
+- `--drop_rate`: Probability of simulating missing modalities during training (default: `0.3`).
+- `--batch_size`: Batch size for training (default: `32`).
+- `--epochs`: Number of training epochs (default: `50`).
 
-The extracted features are provided under the corresponding repositories of the papers cited in the raw feature extraction part of our paper, and can be downloaded directly. 
+---
 
-Additionally, MPLMM can be extended to other datasets and backbones, not limited to the MSA task. Therefore, you can also use your own datasets or any feature extraction methods, as long as you make sure that the dataset class has the corresponding  `get_dim`, `get_seq_len` and `get_missing_mode` functions. For feature extraction tool, you can refer to [Tool](https://github.com/thuiar/MMSA-FET) for more information.
+## Code Structure
 
-### Run the Code
-
-1. Pre-train the model on CMU-MOSEI without prompts
+```plaintext
+AMPL_Package/
+├── main.py               # Entry point for training and evaluation
+├── README.md             # Documentation
+├── LICENSE               # License information
+├── src/                  # Source code
+│   ├── eval_metrics.py   # Evaluation metrics for multimodal tasks
+│   ├── iemodata.py       # IEMOCAP dataset loader
+│   ├── mosidata.py       # CMU-MOSI dataset loader
+│   ├── simsdata.py       # CH-SIMS dataset loader
+│   ├── model.py          # Implementation of the AMPL model
+│   ├── train.py          # Training and evaluation pipeline
+│   ├── utils.py          # Utility functions
 ```
-mkdir pretrained
-python main.py --dataset "mosei" --data_path "mosei path" --drop_rate 0 --name "./pretrained/mosei.pt"
+
+---
+
+## Key Components
+
+### **1. Adaptive Generative Prompts (AGP)**
+- Dynamically reconstructs missing modality embeddings.
+- Combines available modality features with task-specific prompts.
+
+### **2. Attention-Augmented Missing Modality Generation Module (A-MMGM)**
+- Enhances embeddings with cross-modal attention.
+- Captures inter-modal dependencies to refine missing features.
+
+### **3. Dynamic Prompt Injection (DPI)**
+- Modality-specific and task-relevant prompts injected into Transformers.
+- Encodes relationships between missing and available modalities.
+
+---
+
+## Example Workflow
+
+### Training on CMU-MOSEI
+```bash
+python train.py --dataset mosei --drop_rate 0.3 --batch_size 64 --epochs 20
 ```
 
-2. Fine-tuning the pre-trained model on downstream datasets and get results
+### Testing on CMU-MOSI
+```bash
+python train.py --dataset mosi --evaluate
+```
 
-- Fine-tuning on CMU-MOSI
+### Custom Hyperparameters
+Modify the hyperparameters in `train.py` or pass them as arguments to the script.
 
-  ```
-  python main.py --pretrained_model "./pretrained/mosei.pt" --dataset "mosi" --data_path "mosi path" --drop_rate 0.7 --name "mosi.pt"
-  ```
-
-- Fine-tuning on IEMOCAP
-
-  ```
-  python main.py --pretrained_model "./pretrained/mosei.pt" --dataset "iemocap" --data_path "iemocap path" --drop_rate 0.7 --name "iemocap.pt"
-  ```
-
-- Fine-tuning on CH-SIMS
-
-  ```
-  python main.py --pretrained_model "./pretrained/mosei.pt" --dataset "sims" --data_path "sims path" --drop_rate 0.7 --name "sims.pt"
-  ```
-
-*This is a reconstructed code base. If you find any errors, please pose an issue or contact the authors.*
-
-
-
+---
 
 ## Citation
 
-If you find this repository useful, please cite the following paper:
-```bibtex
-@inproceedings{guo2024multimodal,
-  title={Multimodal Prompt Learning with Missing Modalities for Sentiment Analysis and Emotion Recognition},
-  author={Guo, Zirun and Jin, Tao and Zhao, Zhou},
-  booktitle={Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)},
-  pages={1726--1736},
-  year={2024}
-}
+
 ```
 
+---
 
+## License
 
-## Acknowledgements
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
-This code is based on the backbone [MulT](https://github.com/yaohungt/Multimodal-Transformer).
+---
